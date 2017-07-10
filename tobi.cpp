@@ -23,6 +23,8 @@ read from PCF8574AN
 
 
 // Make sure you include wire.h in your code to run this library 
+//	$	Note: Need to open Serial communication in code, because enable() function
+//			tries to write to serial.
 
 #include "tobi.h"
 
