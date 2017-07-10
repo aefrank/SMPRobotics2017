@@ -109,7 +109,7 @@ class tobi
 		/////////////////////////// LEDS ////////////////////////////
 
 		/*  $         LED
-			Turn LED (0,1,2,3,4,5) on (1) or off (0). Note: for state, any nonzero number will be treated as on.
+			Turn onboard LED (0,1,2,3,4,5) on (1) or off (0). Note: for state, any nonzero number will be treated as on.
 			INPUTS: 	- (int) led, (int) state.
 			OUTPUTS: 	- None
 			UPDATED:	- __bit1, __bit2. 

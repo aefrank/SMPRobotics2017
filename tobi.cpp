@@ -23,8 +23,6 @@ read from PCF8574AN
 
 
 // Make sure you include wire.h in your code to run this library 
-//	$	Note: Need to open Serial communication in code, because enable() function
-//			tries to write to serial.
 
 #include "tobi.h"
 
@@ -61,11 +59,11 @@ tobi::tobi()
 	// }
 
 	__pwmPins[0] = 9;
-	__pwmPins[1] = 5; 		// $ kept at 5; pwm 5 (digital pin 5) and analog 5 (A5) are separate pins
+	__pwmPins[1] = 5; 		// $ nevermind, digial 5 vs analog 5, different pins;    xxxx$ changed from 5 to 12, because __encoderPins[5] = 5
 	__pwmPins[2] = 6;
 	__pwmPins[3] = 10;
 	__pwmPins[4] = 11;
-	__pwmPins[5] = 13;
+	__pwmPins[5] = 13;		// $ <--- THIS PWM PIN CAUSES A PROBLEM (when we write to it, it turns all of the LEDS permanently on)
 
 	digitalWrite(13,LOW);		// $ turn off LED
 
@@ -103,19 +101,21 @@ void tobi::enable(void){
 	tobi::__write8(__pcf1,0);
 	tobi::__write8(__pcf2,0);
 
-	for(int i = 0 ; i < 6 ; i ++) {
-	analogWrite(__pwmPins[i],100);	
+	for(int i = 0 ; i < 5 ; i ++) {		// $ don't write to last pin, it messes up the LEDs
+		analogWrite(__pwmPins[i],100);	
 	}
 
 	//	$ The following two lines were commented out when we got the file.
 	//  $	Seems it was to be used with unfinished __legUpdate method.
 		//	Timer1.initialize(5000); 	//Set how frequently interrrupt occurs (5000=200Hz [DON'T CHANGE THIS!!!])
 		// 	Timer1.attachInterrupt(__legUpdate_wrapper); //Set what function runs when interrupt occurs
-  	for (int i = 0 ; i < 8 ; i ++){
+		
+		
+  	for (int i = 0 ; i < 6 ; i ++){
   		tobi::led(i,1);
   		delay(100);
   	}
-	for(int i = 1 ; i < 8 ; i ++) {
+	for(int i = 5 ; i >=0 ; i --) {
 		tobi::led(i,0);
   		delay(100);	
 	}
@@ -242,11 +242,16 @@ int tobi::getAngle(int leg){
 	Turn LED (0,1,2,3,4,5) on (1) or off (0). Note: for state, any nonzero number will be treated as on.
 	INPUTS: 	- (int) led, (int) state.
 	OUTPUTS: 	- None
-	UPDATED:	- __bit1, __bit2. 
+	UPDATED:	- __bit2. 
 */
 void tobi::led(int led, int state){
-	if (state == 0)		__bit2 |= (1<<led+1);
-	else 				__bit2 &= ~(1<<led+1);
+	if (state == 1){	__bit2 |= (1<<led+1);
+		Serial.println(__bit2);
+	}
+	else 			{
+		__bit2 &= ~(1<<led+1);
+		Serial.println(__bit2);
+	}
 	tobi::__write8(__pcf2,__bit2);
 }
 
