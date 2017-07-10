@@ -61,7 +61,7 @@ tobi::tobi()
 	// }
 
 	__pwmPins[0] = 9;
-	__pwmPins[1] = 12; 		// $ changed from 5 to 12, because __encoderPins[5] = 5
+	__pwmPins[1] = 5; 		// $ kept at 5; pwm 5 (digital pin 5) and analog 5 (A5) are separate pins
 	__pwmPins[2] = 6;
 	__pwmPins[3] = 10;
 	__pwmPins[4] = 11;
