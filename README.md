@@ -1,17 +1,24 @@
 # SMPRobotics2017
 README
 Andrea Frank
-7/10/2017
+Created 7/10/2017
 
-This library is used to control the TOBI v.3 robot. The library was developed for use by Summer
-Mentorship Program, Engineering, 2017. The library provides a tobi class, with methods for 
-initialization, flashing LEDs, controling the motors of each leg, and reading the encoders.
+This respository contains pertinent code for Summer Mentorship Program, Engineering, 2017.
+This includes the library used to control the TOBI v.3 robot, as well as instructional
+programs used to teach coding concepts. The Tobi.h library provides a tobi class, with
+methods for initialization, flashing LEDs, controling the motors of each leg, and reading
+the encoders.
 
 Original library and header file created by Cherag Bhagwagar (10/21/2016). Updates (denoted by $ at
-the start of comments) and re-organization by Andrea Frank (7/10/2017). 
+the start of comments) and re-organization by Andrea Frank (see changelog). 
 
 ****
 ## ***** CHANGELOG: *****
+
+<b>By: Andrea Frank, 7/17/17</b>	*************************************************************************************************\
+<i>Major changes:</i> Uploaded example files from programming lessons to repository.
+
+<i>Minor Changes:</i> Updated README.md
 
 <b>By: Andrea Frank, 7/12/17</b>	*************************************************************************************************\
 <i>Major changes:</i> Changed `tobi` class to `Tobi` to keep with class naming convention. I didn't
