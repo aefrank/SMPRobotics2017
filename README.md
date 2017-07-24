@@ -15,6 +15,11 @@ the start of comments) and re-organization by Andrea Frank (see changelog).
 ****
 ## ***** CHANGELOG: *****
 
+<b>By: Andrea Frank, 7/24/17</b>	*************************************************************************************************\
+<i>Major changes:</i> Changed `getAngle()` to `readEncoders()`, since that's really what you do. `analogUpdate()` is now private (renamed `_analogUpdate()`) and called automatically when calling `readEncoders()`. Added a `calibrateEncoders()` method, because sometimes the max encoder value varies. Took out `#include <TimerOne.h>` since we don't end up using it. 
+
+<i>Minor Changes:</i> Cleaned up library comments and such in general. 
+
 <b>By: Andrea Frank, 7/17/17</b>	*************************************************************************************************\
 <i>Major changes:</i> Uploaded example files from programming lessons to repository.
 
