@@ -1,7 +1,7 @@
 Tobi	KEYWORD1
 enable	KEYWORD2
 disable	KEYWORD2
-setMotor	KEYWORD2
+setMotorDir	KEYWORD2
 powerAxis	KEYWORD2
 setPwm	KEYWORD2
 getPwm KEYWORD2

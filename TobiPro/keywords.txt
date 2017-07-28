@@ -1,0 +1,10 @@
+TobiPro	KEYWORD1
+getSpeed	KEYWORD2
+setMotorIndices	KEYWORD2
+update	KEYWORD2
+setSpeed	KEYWORD2
+setSampleRate	KEYWORD2
+filterInputs	KEYWORD2
+serialSetup	KEYWORD2
+calcSpeed	KEYWORD2
+srDelay	KEYWORD2

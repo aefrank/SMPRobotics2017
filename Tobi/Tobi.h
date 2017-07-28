@@ -20,7 +20,8 @@ Created by Cherag Bhagwagar
 //	#include "TimerOne.h"		// $ We don't use this in any functions for the class, so its unnecessary 
 #include "math.h"
 
-#define NUM_MOTORS 6	// number of usable motors
+#define NUM_MOTORS 4	// number of usable motors
+#define NUM_WHEELS 2	// number of wheels 
 #define NUM_AXES 2		// number of usable axes (right now 2, because third axis is connected to 
 									// motor 5, which is wired weirdly to connect to reset sequence)
 
@@ -35,6 +36,9 @@ class Tobi
 	/***************************************************************************************/
 
 	public:	
+
+		int maxEncoderVals[NUM_MOTORS];		// stores max encoder vals; originally set to 1023 by Tobi::enable(),
+												// and updated during calibrateEncoders()
 
 		/////////////////////////// SETUP ////////////////////////////
 
@@ -55,18 +59,19 @@ class Tobi
 		use of motor 4 and 5 is desired, it should be powered separately in code. This will make it spin during upload.
 		INPUTS: 	- None
 		OUTPUTS: 	- None
-		UPDATED:	- No variables updated, but writes 0 to pins __pcf1 and __pcf2, and 0 to all pins in __pwmPins. 
-								Also turns on all axis and sets motor directions to default.
+		UPDATED:	- maxEncoderVals initialized.
+		EFFECTS:	- Writes 0 to pins __pcf1 and __pcf2, and 0 to all pins in __pwmPins. Turns on all axis and sets motor
+					directions to default. Cascades LEDs.
 		*/
 		void enable(void);
 
 		/*  $         DISABLE
-			Disable TOBI. Set all legs to speed 0, clear __bit1 and __bit2.
+			Disable TOBI. Set all legs to speed 0, unpower all axes, and clear __bit0 and __bit1.
 			INPUTS: 	- None.
 			OUTPUTS: 	- None.
-			UPDATED:	- __bit1, __bit2.
+			UPDATED:	- __bit0, __bit1.
 		*/
-		void disable();
+		void disable(void);
 
 			/////////////////////////// MOTION ////////////////////////////
 
@@ -75,7 +80,7 @@ class Tobi
 				and motors (2,4) should be set to 1. Uses PCF io expander and bit shifts.
 			INPUTS: 	- (int) motor, (int) direction.
 			OUTPUTS: 	- None
-			UPDATED:	- __bit1.
+			UPDATED:	- __bit0.
 		*/
 		void setMotor(int motor , int direction);
 
@@ -84,7 +89,7 @@ class Tobi
 				M0-M1 (axis 0), M2-M3 (axis 1), and M4-M5 (axis 2).
 			INPUTS: 	- (int) axis, (int) state.
 			OUTPUTS: 	- None
-			UPDATED:	- __bit1, __bit2.
+			UPDATED:	- __bit0, __bit1.
 		*/
 		void powerAxis(int axis, int state);
 
@@ -115,8 +120,8 @@ class Tobi
 			OUTPUTS: 	- None.
 			UPDATED:	- maxEncoderVals
 		*/
-		void Tobi::calibrateEncoders(int* maxEncoderVals, int numEncoders);
-		void Tobi::calibrateEncoders(int* maxEncoderVals, int numEncoders, int* encoderIndices);
+		void calibrateEncoders();
+		void calibrateEncoders(int* encoderIndices);
 
 		/*  $         READENCODER
 			Call to read the value reported by the encoder for a specific leg. Method is necessary
@@ -136,7 +141,7 @@ class Tobi
 			Turn onboard LED (0,1,2,3,4,5) on (1) or off (0). Note: for state, any nonzero number will be treated as on.
 			INPUTS: 	- (int) led, (int) state.
 			OUTPUTS: 	- None
-			UPDATED:	- __bit1, __bit2. 
+			UPDATED:	- __bit0, __bit1. 
 		*/
 		void led(int led, int state);
 		
@@ -144,7 +149,7 @@ class Tobi
 			Turn nose LED off (state = 0) or on (state = 1).
 			INPUTS: 	- (int) state.
 			OUTPUTS: 	- None.
-			UPDATED:	- __bit2.
+			UPDATED:	- __bit1.
 		*/
 		void noseLed(int state);
 		

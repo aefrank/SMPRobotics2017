@@ -31,8 +31,8 @@ void *__ptr1; 		// $ placeholder pointer
 #define __pcf2 57	// $ addresses for PCF IO expander
 #define __pcf1 56
 
-byte __bit1 = 0;	// $ placeholder bits
-byte __bit2 = 0;
+byte __bit0 = 0;	// $ placeholder bits
+byte __bit1 = 0;
 
 /***************************************************************************************/
 /***************************************************************************************/
@@ -46,7 +46,7 @@ byte __bit2 = 0;
 	Initialize all variables on this instance.
 	INPUTS: 	- None
 	OUTPUTS: 	- None
-	UPDATED: 	__pwmPins, __encoderPins
+	UPDATED: 	Tobi::__pwmPins, Tobi::__encoderPins
 */
 Tobi::Tobi()
 {
@@ -54,40 +54,41 @@ Tobi::Tobi()
 
 	// for (int i = 0 ; i < 5; i ++ ){
 	// 	Serial.println("Working");
-	// 	__encoderVal[i] = 0;
+	// 	Tobi::__encoderVal[i] = 0;
 	// }
 
-	__pwmPins[0] = 9;
-	__pwmPins[1] = 5; 		// $ nevermind, digial 5 vs analog 5, different pins;    xxxx$ changed from 5 to 12, because __encoderPins[5] = 5
-	__pwmPins[2] = 6;
-	__pwmPins[3] = 10;
-	__pwmPins[4] = 11;
-	__pwmPins[5] = 13;		// $ <--- THIS PWM PIN CAUSES A PROBLEM (it pulses with the LEDs during upload)
+	Tobi::__pwmPins[0] = 9;
+	Tobi::__pwmPins[1] = 5; 		// $ nevermind, digial 5 vs analog 5, different pins;    xxxx$ changed from 5 to 12, because Tobi::__encoderPins[5] = 5
+	Tobi::__pwmPins[2] = 6;
+	Tobi::__pwmPins[3] = 10;
+	Tobi::__pwmPins[4] = 11;
+	Tobi::__pwmPins[5] = 13;		// $ <--- THIS PWM PIN CAUSES A PROBLEM (it pulses with the LEDs during upload)
 									// pretty sure its a problem with the PCB; we have it wired to something that 
 									// pulses on startup -- maybe change it to D4 or D12?
 
 	digitalWrite(13,LOW);		// $ turn off LED
 
-	__encoderPins[0] = 0;
-	__encoderPins[1] = 1;
-	__encoderPins[2] = 2;
-	__encoderPins[3] = 3;
-	__encoderPins[4] = 4;
-	__encoderPins[5] = 5;
+	Tobi::__encoderPins[0] = 0;
+	Tobi::__encoderPins[1] = 1;
+	Tobi::__encoderPins[2] = 2;
+	Tobi::__encoderPins[3] = 3;
+	Tobi::__encoderPins[4] = 4;
+	Tobi::__encoderPins[5] = 5;
 	digitalWrite(13,HIGH); 		// $ turn on LED
 }
 
 /*  $         ENABLE
 	Set up and enable hardware. Sets IO pins to proper direction, writes 0 to two pcf pins, sets default motor
-		directions, turn son power for each axis, and writes pwm to 0 for each motor. It then cascades LEDs on
+		directions, turns on power for each axis, and writes pwm to 0 for each motor. It then cascades LEDs on
 		and off and prints a complete statement to Serial (if enabled).
 	NOTE: DOES NOT ENABLE AXIS 2 (M4-M5), AS THIS LINKS MOTOR 5 TO UPLOAD SEQUENCE (spins with flashing LEDS AND
 		DOES NOT ACTIVATE MOTOR. Direction and pwm are still set for motors 4 and 5, but axis is not powered. If
 		use of motor 4 and 5 is desired, it should be powered separately in code. This will make it spin during upload.
 	INPUTS: 	- None
 	OUTPUTS: 	- None
-	UPDATED:	- No variables updated, but writes 0 to pins __pcf1 and __pcf2, and 0 to all pins in __pwmPins. 
-							Also turns on all axis and sets motor directions to default.
+	UPDATED:	- maxEncoderVals initialized.
+	EFFECTS:	- Writes 0 to pins __pcf1 and __pcf2, and 0 to all pins in Tobi::__pwmPins. Turns on all axis and sets motor
+					directions to default. Cascades LEDs.
 */
 void Tobi::enable(void){
 	if(Serial) Serial.println("Enabling TOBI...");
@@ -95,20 +96,25 @@ void Tobi::enable(void){
 
 	// $ Set PWM pins to output 
 	for (int i = 0 ; i < NUM_MOTORS; i ++){
-		pinMode(__pwmPins[i],OUTPUT);
+		pinMode(Tobi::__pwmPins[i],OUTPUT);
 	}
-
 	// $ Set encoder pins to input
 	for (int i = 0 ; i < NUM_MOTORS; i ++){
-		pinMode(__encoderPins[i],INPUT);
+		pinMode(Tobi::__encoderPins[i],INPUT);
 	}
 
+	// $ initialize maxEncoderVals
+	for (int i =0; i < NUM_MOTORS; i++){
+		maxEncoderVals[i] = 1023;		// default max encoder val
+	}
+
+	// $ write 0 to IO expanders
 	Wire.begin();
 	Tobi::__write8(__pcf1,0);
 	Tobi::__write8(__pcf2,0);
 
 	for(int i = 0 ; i < NUM_MOTORS; i ++) {		
-		analogWrite(__pwmPins[i], 0);	
+		analogWrite(Tobi::__pwmPins[i], 0);	
 	}
 		
 	// $ turn all motor axes off originally to avoid issues with setting direction and pwm
@@ -140,17 +146,20 @@ void Tobi::enable(void){
 
 
 /*  $         DISABLE
-	Disable TOBI. Set all legs to speed 0, clear __bit1 and __bit2.
+	Disable TOBI. Set all legs to speed 0, unpower all axes, and clear __bit0 and __bit1.
 	INPUTS: 	- None.
 	OUTPUTS: 	- None.
-	UPDATED:	- __bit1, __bit2.
+	UPDATED:	- __bit0, __bit1.
 */
 void Tobi::disable(){
-	for(int i  = 0 ; i < NUM_MOTORS ; i ++){
-		analogWrite(__pwmPins[i], 0); 	//all leg speed to 0
+	for(int i = 0; i < 3; i++){
+		Tobi::powerAxis(i,0);
 	}
-	__bit2 = 0 ;
+	for(int i  = 0 ; i < NUM_MOTORS ; i ++){
+		analogWrite(Tobi::__pwmPins[i], 0); 	//all leg speed to 0
+	}
 	__bit1 = 0 ;
+	__bit0 = 0 ;
 	if(Serial) Serial.println("TOBI disabled.\n");
 }
 
@@ -162,7 +171,7 @@ void Tobi::disable(){
 		and motors (2,4) should be set to 1. Uses PCF io expander and bit shifts.
 	INPUTS: 	- (int) motor, (int) direction.
 	OUTPUTS: 	- None
-	UPDATED:	- __bit1.
+	UPDATED:	- __bit0.
 */
 void Tobi::setMotor(int motor , int direction){
 	// $ check for valid motor number input
@@ -172,10 +181,10 @@ void Tobi::setMotor(int motor , int direction){
     }
 	
 	// 
-    if (direction == 1)			__bit1 |= (1<<motor);        // $ assign "motor"th bit to 1    
-    else if (direction == -1)	__bit1 &= ~(1<<(motor)); 	 // $ assign "motor"th bit to 0
+    if (direction == 1)			__bit0 |= (1<<motor);        // $ assign "motor"th bit to 1    
+    else if (direction == -1)	__bit0 &= ~(1<<(motor)); 	 // $ assign "motor"th bit to 0
     else Serial.println ("Invalid direction. Must choose 1 or -1.") ;
-    Tobi::__write8(__pcf1,__bit1);	// $ write __bit1 to __pcf1 through PCF io expander.
+    Tobi::__write8(__pcf1,__bit0);	// $ write __bit0 to __pcf1 through PCF io expander.
 }
 
 /*  $         POWERAXIS
@@ -183,7 +192,7 @@ void Tobi::setMotor(int motor , int direction){
 		M0-M1 (axis 0), M2-M3 (axis 1), and M4-M5 (axis 2).
 	INPUTS: 	- (int) axis, (int) state.
 	OUTPUTS: 	- None
-	UPDATED:	- __bit1, __bit2.
+	UPDATED:	- __bit0, __bit1.
 */
 void Tobi::powerAxis (int axis, int state){
 	//TODO Check pins of new eagle file 
@@ -191,19 +200,19 @@ void Tobi::powerAxis (int axis, int state){
         works on enable pins for motor driver
     */
     if (axis == 0){
-    	if (state == 1)			__bit1 |= (1<<6);
-    	else if (state == 0)	__bit1 &= ~(1<<6);
-    	Tobi::__write8(__pcf1,__bit1);
+    	if (state == 1)			__bit0 |= (1<<6);
+    	else if (state == 0)	__bit0 &= ~(1<<6);
+    	Tobi::__write8(__pcf1,__bit0);
     	}
     else if (axis == 1){
-    	if (state == 1)			__bit1 |= (1<<7);
-    	else if (state == 0)	__bit1 &= ~(1<<7);
-    	Tobi::__write8(__pcf1,__bit1);
+    	if (state == 1)			__bit0 |= (1<<7);
+    	else if (state == 0)	__bit0 &= ~(1<<7);
+    	Tobi::__write8(__pcf1,__bit0);
     	}
     else if (axis == 2){
-    	if (state == 1)			__bit2 |= (1<<0);
-    	else if (state == 0)	__bit2 &= ~(1<<0);
-    	Tobi::__write8(__pcf2,__bit2);
+    	if (state == 1)			__bit1 |= (1<<0);
+    	else if (state == 0)	__bit1 &= ~(1<<0);
+    	Tobi::__write8(__pcf2,__bit1);
     	}
    	 else Serial.println ("Wrong command") ;
 }
@@ -215,18 +224,18 @@ void Tobi::powerAxis (int axis, int state){
 	UPDATED:	- None.
 */
 void Tobi::setPwm(int motor, int pwm){
-	__pwmVal[motor] = pwm;
-	analogWrite(__pwmPins[motor], pwm);	
+	Tobi::__pwmVal[motor] = pwm;
+	analogWrite(Tobi::__pwmPins[motor], pwm);	
 }
 
 /*  $         GETPWM
 	Returns PWM of desired motor from 0 - 255.
 	INPUTS: 	- (int) motor
 	OUTPUTS: 	- None.
-	UPDATED:	- N__pwmVal[motor]
+	UPDATED:	- __pwmVal[motor]
 */
 int Tobi::getPwm(int motor){
-	return __pwmVal[motor];
+	return Tobi::__pwmVal[motor];
 }
 
 
@@ -234,16 +243,16 @@ int Tobi::getPwm(int motor){
 
 /*  $         CALIBRATEENCODERS
 	Finds max values of each encoder and saves them to an array passed
-	in by reference. maxEncoderVals MUST be an array of size numEncoders.
-	If encoders are not numbered 0-numEncoders, must pass in a third
+	in by reference. maxEncoderVals MUST be an array of size NUM_MOTORS.
+	If encoders are not numbered 0-NUM_MOTORS, must pass in a third
 	argument that is a pointer to an array that indexes encoder numbers.
-	INPUTS: 	- int* maxEncoderVals, int numEncoders (optional int* encoderIndices)
+	INPUTS: 	- int* maxEncoderVals, int NUM_MOTORS (optional int* encoderIndices)
 	OUTPUTS: 	- None.
 	UPDATED:	- maxEncoderVals
 */
-void Tobi::calibrateEncoders(int* maxEncoderVals, int numEncoders){
+void Tobi::calibrateEncoders(){
 	if(Serial) Serial.println("Calibrating encoders...");
-  	for(int i = 0; i < numEncoders; i++){
+  	for(int i = 0; i < NUM_MOTORS; i++){
 	    // set motor to max speed
 	    Tobi::setPwm(i,255);
 	    // record 100 encoder values
@@ -261,9 +270,9 @@ void Tobi::calibrateEncoders(int* maxEncoderVals, int numEncoders){
  	}
  	if(Serial) Serial.println("Calibration complete.\n");
 }
-void Tobi::calibrateEncoders(int* maxEncoderVals, int numEncoders, int* encoderIndices){
+void Tobi::calibrateEncoders(int* encoderIndices){
 	if(Serial) Serial.println("Calibrating encoders...");
-	for(int i = 0; i < numEncoders; i++){
+	for(int i = 0; i < NUM_MOTORS; i++){
 	    // set motor to max speed
 	    Tobi::setPwm(encoderIndices[i],255);
 	    // record 100 encoder values
@@ -294,7 +303,7 @@ void Tobi::calibrateEncoders(int* maxEncoderVals, int numEncoders, int* encoderI
 */
 int Tobi::readEncoder(int motor){
 	Tobi::_analogUpdate();	// update _encoderVal
-	return (__encoderVal[motor]);
+	return (Tobi::__encoderVal[motor]);
 }
 
 
@@ -305,26 +314,26 @@ int Tobi::readEncoder(int motor){
 	Turn LED (0,1,2,3,4,5) on (1) or off (0). Note: for state, any nonzero number will be treated as on.
 	INPUTS: 	- (int) led, (int) state.
 	OUTPUTS: 	- None
-	UPDATED:	- __bit2. 
+	UPDATED:	- __bit1. 
 */
 void Tobi::led(int led, int state){
-	if (state == 1){	__bit2 |= (1<<led+1);
+	if (state == 1){	__bit1 |= (1<<led+1);
 	}
 	else {
-		__bit2 &= ~(1<<led+1);
+		__bit1 &= ~(1<<led+1);
 	}
-	Tobi::__write8(__pcf2,__bit2);
+	Tobi::__write8(__pcf2,__bit1);
 }
 
 /*  $         NOSELED
 	Turn nose LED off (state = 0) or on (state = 1).
 	INPUTS: 	- (int) state.
 	OUTPUTS: 	- None.
-	UPDATED:	- __bit2.
+	UPDATED:	- __bit1.
 */
 void Tobi::noseLed(int state){
-	if (state == 1)		__bit2 |= (1<<7); 
-	else 				__bit2 &= ~(1<<7) ;
+	if (state == 1)		__bit1 |= (1<<7); 
+	else 				__bit1 &= ~(1<<7) ;
 }
 
 
@@ -332,20 +341,20 @@ void Tobi::noseLed(int state){
 /////////////////////////// HELPER METHODS ////////////////////////////
 
 /*  $         _ANALOGUPDATE
-	Read encoder values into __encoderVal array for easy access. Should be called before 
-		acting upon __encoderVal values.
+	Read encoder values into Tobi::__encoderVal array for easy access. Should be called before 
+		acting upon Tobi::__encoderVal values.
 	INPUTS: 	- None
 	OUTPUTS: 	- None
-	UPDATED:	- __encoderVal
+	UPDATED:	- Tobi::__encoderVal
 */
 void Tobi::_analogUpdate(){
 	//call in loop everytime
-	__encoderVal[0] = analogRead(0);
-	__encoderVal[1] = analogRead(1);
-	__encoderVal[2] = analogRead(2);
-	__encoderVal[3] = analogRead(3);
-	__encoderVal[4] = analogRead(4);
-	__encoderVal[5] = analogRead(5);
+	Tobi::__encoderVal[0] = analogRead(0);
+	Tobi::__encoderVal[1] = analogRead(1);
+	Tobi::__encoderVal[2] = analogRead(2);
+	Tobi::__encoderVal[3] = analogRead(3);
+	Tobi::__encoderVal[4] = analogRead(4);
+	Tobi::__encoderVal[5] = analogRead(5);
 }
 
 /*  $         WRITE8
@@ -371,9 +380,9 @@ void Tobi::__write8(int address, byte value){
 void Tobi::print_raw(){
 	//TODO
 	Serial.print("BIT 1:\t");
-	Serial.println(__bit1,BIN);
+	Serial.println(__bit0,BIN);
 	Serial.print("BIT 2:\t");
-	Serial.println(__bit2,BIN);
+	Serial.println(__bit1,BIN);
 	Serial.println("---------------------------");
 
 	}
@@ -382,7 +391,7 @@ void Tobi::print(){
 	//prints out all angle in format 
 	// angle leg <leg #> <angle value>
 	for (int i = 0 ; i < NUM_MOTORS; i ++){
-		Serial.print("angle leg "); Serial.print(i); Serial.print("  "); Serial.println(__encoderVal[i]);
+		Serial.print("angle leg "); Serial.print(i); Serial.print("  "); Serial.println(Tobi::__encoderVal[i]);
 	}
 
 	//TODO
