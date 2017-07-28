@@ -5,15 +5,21 @@ Created 7/10/2017
 
 This respository contains pertinent code for Summer Mentorship Program, Engineering, 2017.
 This includes the library used to control the TOBI v.3 robot, as well as instructional
-programs used to teach coding concepts. The Tobi.h library provides a tobi class, with
+programs used to teach coding concepts. The `Tobi.h` library provides a tobi class, with
 methods for initialization, flashing LEDs, controling the motors of each leg, and reading
-the encoders.
+the encoders. `TobiPro.h` class provides extra functionality for students to use if 
+instructors want to give the students a head start.
 
 Original library and header file created by Cherag Bhagwagar (10/21/2016). Updates (denoted by $ at
 the start of comments) and re-organization by Andrea Frank (see changelog). 
 
 ****
 ## ***** CHANGELOG: *****
+
+<b>By: Andrea Frank, 7/28/17</b>	*************************************************************************************************\
+<i>Major changes:</i> Began writing `TobiPro` library. This library will be optional for instructors to provide when teaching the TOBI robot. It contains methods for getting the speed of the TOBI bot, as well as filtering the speeds for more smooth values. These are methods that the instructor may prefer to have the students write on their own, which is why they are in a different library. `TobiFilterManager` and `Filters` are also included. `TobiFilterManager` is used by `TobiPro` to manage filtering and statistics of input and output signals. Libraries are not sufficiently commented yet - sorry! That's the next step.
+
+<i>Minor Changes:</i> Cleaned up `Tobi` library comments. Also began writing TOBI Programming Guide and Example Solutions in Google Drive. I'll add them here once finished.
 
 <b>By: Andrea Frank, 7/24/17</b>	*************************************************************************************************\
 <i>Major changes:</i> Changed `getAngle()` to `readEncoders()`, since that's really what you do. `analogUpdate()` is now private (renamed `_analogUpdate()`) and called automatically when calling `readEncoders()`. Added a `calibrateEncoders()` method, because sometimes the max encoder value varies. Took out `#include <TimerOne.h>` since we don't end up using it. 
