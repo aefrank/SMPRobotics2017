@@ -76,8 +76,7 @@ class Tobi
 			/////////////////////////// MOTION ////////////////////////////
 
 		/*  $         SETMOTOR
-			Set motor direction. Based on our test-TOBI, motors (0,1,3,5) should be set to -1,
-				and motors (2,4) should be set to 1. Uses PCF io expander and bit shifts.
+			Set motor direction. Uses PCF io expander and bit shifts.
 			INPUTS: 	- (int) motor, (int) direction.
 			OUTPUTS: 	- None
 			UPDATED:	- __bit0.

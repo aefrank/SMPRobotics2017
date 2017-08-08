@@ -31,8 +31,8 @@ void *__ptr1; 		// $ placeholder pointer
 #define __pcf2 57	// $ addresses for PCF IO expander
 #define __pcf1 56
 
-byte __bit0 = 0;	// $ placeholder bits
-byte __bit1 = 0;
+byte __byte1 = 0;	// $ placeholder bits
+byte __byte2 = 0;
 
 /***************************************************************************************/
 /***************************************************************************************/
@@ -122,9 +122,8 @@ void Tobi::enable(void){
 		Tobi::powerAxis(i,0);
 	}
 	// $ set up motors initially in forward direction, pwm = 0, then turn axis power on
-	int dir[] = {-1, -1, 1, -1, 1, -1};	// according to test tobi, these defaults should work for turning motors forward
 	for (int i = 0; i < NUM_MOTORS; i++){
-		Tobi::setMotor(i,dir[i]);	// set motors in correct direction
+		Tobi::setMotor(i,1);	// set motors in default direction
 		Tobi::setPwm(i,0);			// set duty cycle to 0
 	}
 	for (int i = 0; i < NUM_AXES; i++){
@@ -146,10 +145,10 @@ void Tobi::enable(void){
 
 
 /*  $         DISABLE
-	Disable TOBI. Set all legs to speed 0, unpower all axes, and clear __bit0 and __bit1.
+	Disable TOBI. Set all legs to speed 0, unpower all axes, and clear __byte1 and __byte2.
 	INPUTS: 	- None.
 	OUTPUTS: 	- None.
-	UPDATED:	- __bit0, __bit1.
+	UPDATED:	- __byte1, __byte2.
 */
 void Tobi::disable(){
 	for(int i = 0; i < 3; i++){
@@ -158,8 +157,8 @@ void Tobi::disable(){
 	for(int i  = 0 ; i < NUM_MOTORS ; i ++){
 		analogWrite(Tobi::__pwmPins[i], 0); 	//all leg speed to 0
 	}
-	__bit1 = 0 ;
-	__bit0 = 0 ;
+	__byte2 = 0 ;
+	__byte1 = 0 ;
 	if(Serial) Serial.println("TOBI disabled.\n");
 }
 
@@ -167,11 +166,10 @@ void Tobi::disable(){
 /////////////////////////// MOTION ////////////////////////////
 
 /*  $         SETMOTOR
-	Set motor direction. Based on our test-TOBI, motors (0,1,3,5) should be set to -1,
-		and motors (2,4) should be set to 1. Uses PCF io expander and bit shifts.
+	Set motor direction. Uses PCF io expander and bit shifts.
 	INPUTS: 	- (int) motor, (int) direction.
 	OUTPUTS: 	- None
-	UPDATED:	- __bit0.
+	UPDATED:	- __byte1.
 */
 void Tobi::setMotor(int motor , int direction){
 	// $ check for valid motor number input
@@ -181,10 +179,10 @@ void Tobi::setMotor(int motor , int direction){
     }
 	
 	// 
-    if (direction == 1)			__bit0 |= (1<<motor);        // $ assign "motor"th bit to 1    
-    else if (direction == -1)	__bit0 &= ~(1<<(motor)); 	 // $ assign "motor"th bit to 0
+    if (direction == 1)			__byte1 |= (1<<motor);        // $ assign "motor"th bit to 1    
+    else if (direction == -1)	__byte1 &= ~(1<<(motor)); 	 // $ assign "motor"th bit to 0
     else Serial.println ("Invalid direction. Must choose 1 or -1.") ;
-    Tobi::__write8(__pcf1,__bit0);	// $ write __bit0 to __pcf1 through PCF io expander.
+    Tobi::__write8(__pcf1,__byte1);	// $ write __byte1 to __pcf1 through PCF io expander.
 }
 
 /*  $         POWERAXIS
@@ -192,29 +190,32 @@ void Tobi::setMotor(int motor , int direction){
 		M0-M1 (axis 0), M2-M3 (axis 1), and M4-M5 (axis 2).
 	INPUTS: 	- (int) axis, (int) state.
 	OUTPUTS: 	- None
-	UPDATED:	- __bit0, __bit1.
+	UPDATED:	- __byte1, __byte2.
 */
 void Tobi::powerAxis (int axis, int state){
 	//TODO Check pins of new eagle file 
 	/* turn motor axis on/off (0 -> M0-M1 ,1 -> M2-M3, 2-> M4-M5 anything else-> error
         works on enable pins for motor driver
     */
-    if (axis == 0){
-    	if (state == 1)			__bit0 |= (1<<6);
-    	else if (state == 0)	__bit0 &= ~(1<<6);
-    	Tobi::__write8(__pcf1,__bit0);
-    	}
-    else if (axis == 1){
-    	if (state == 1)			__bit0 |= (1<<7);
-    	else if (state == 0)	__bit0 &= ~(1<<7);
-    	Tobi::__write8(__pcf1,__bit0);
-    	}
-    else if (axis == 2){
-    	if (state == 1)			__bit1 |= (1<<0);
-    	else if (state == 0)	__bit1 &= ~(1<<0);
-    	Tobi::__write8(__pcf2,__bit1);
-    	}
-   	 else Serial.println ("Wrong command") ;
+    switch (axis){
+    	case 0 : 
+	    	if (state == 1)			__byte1 |= (1<<6);
+	    	else if (state == 0)	__byte1 &= ~(1<<6);
+	    	Tobi::__write8(__pcf1,__byte1);
+	    	break;
+    	case 1 :
+	    	if (state == 1)			__byte1 |= (1<<7);
+	    	else if (state == 0)	__byte1 &= ~(1<<7);
+	    	Tobi::__write8(__pcf1,__byte1);
+	    	break;
+    	case 2 :
+	    	if (state == 1)			__byte2 |= (1<<0);
+	    	else if (state == 0)	__byte2 &= ~(1<<0);
+	    	Tobi::__write8(__pcf2,__byte2);
+	    	break;
+   	 	default:
+   	 		Serial.println ("Wrong command") ;
+   	}
 }
 
 /*  $         SETPWM
@@ -314,26 +315,26 @@ int Tobi::readEncoder(int motor){
 	Turn LED (0,1,2,3,4,5) on (1) or off (0). Note: for state, any nonzero number will be treated as on.
 	INPUTS: 	- (int) led, (int) state.
 	OUTPUTS: 	- None
-	UPDATED:	- __bit1. 
+	UPDATED:	- __byte2. 
 */
 void Tobi::led(int led, int state){
-	if (state == 1){	__bit1 |= (1<<led+1);
+	if (state == 1){	__byte2 |= (1<<led+1);
 	}
 	else {
-		__bit1 &= ~(1<<led+1);
+		__byte2 &= ~(1<<led+1);
 	}
-	Tobi::__write8(__pcf2,__bit1);
+	Tobi::__write8(__pcf2,__byte2);
 }
 
 /*  $         NOSELED
 	Turn nose LED off (state = 0) or on (state = 1).
 	INPUTS: 	- (int) state.
 	OUTPUTS: 	- None.
-	UPDATED:	- __bit1.
+	UPDATED:	- __byte2.
 */
 void Tobi::noseLed(int state){
-	if (state == 1)		__bit1 |= (1<<7); 
-	else 				__bit1 &= ~(1<<7) ;
+	if (state == 1)		__byte2 |= (1<<7); 
+	else 				__byte2 &= ~(1<<7) ;
 }
 
 
@@ -380,9 +381,9 @@ void Tobi::__write8(int address, byte value){
 void Tobi::print_raw(){
 	//TODO
 	Serial.print("BIT 1:\t");
-	Serial.println(__bit0,BIN);
+	Serial.println(__byte1,BIN);
 	Serial.print("BIT 2:\t");
-	Serial.println(__bit1,BIN);
+	Serial.println(__byte2,BIN);
 	Serial.println("---------------------------");
 
 	}
