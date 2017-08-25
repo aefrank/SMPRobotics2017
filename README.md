@@ -16,6 +16,11 @@ the start of comments) and re-organization by Andrea Frank (see changelog).
 ****
 ## ***** CHANGELOG: *****
 
+<b>By: Andrea Frank, 8/25/17</b>	*************************************************************************************************\
+<i>Major changes:</i> Added descriptive comments to TobiPro methods.
+
+<i>Minor Changes:</i> 
+
 <b>By: Andrea Frank, 7/28/17</b>	*************************************************************************************************\
 <i>Major changes:</i> Began writing `TobiPro` library. This library will be optional for instructors to provide when teaching the TOBI robot. It contains methods for getting the speed of the TOBI bot, as well as filtering the speeds for more smooth values. These are methods that the instructor may prefer to have the students write on their own, which is why they are in a different library. `TobiFilterManager` and `Filters` are also included. `TobiFilterManager` is used by `TobiPro` to manage filtering and statistics of input and output signals. Libraries are not sufficiently commented yet - sorry! That's the next step.
 
